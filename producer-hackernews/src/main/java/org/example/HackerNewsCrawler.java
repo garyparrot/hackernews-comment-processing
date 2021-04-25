@@ -1,11 +1,16 @@
 package org.example;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.serialization.StringSerializer;
+import org.example.hackernews.GenericItem;
+import org.example.hackernews.ItemSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,6 +28,7 @@ public class HackerNewsCrawler {
     private static final String hackerNewsItemBegin = "application.hackernews.item.begin";
     private static final String hackerNewsItemOffset = "application.hackernews.item.offset";
     private static final String hackerNewsCrawInterval = "application.hackernews.craw.interval";
+    private static final ObjectMapper objectMapper = new ObjectMapper();
     private static Properties appConfig;
     private static Properties producerConfig;
 
@@ -31,10 +37,14 @@ public class HackerNewsCrawler {
         logger.info("Application started");
         appConfig = new Properties();
         producerConfig = new Properties();
+
+        // TODO: Don't load configuration like this, probably just embedded everything in code.
         loadPropertiesFromSystemProperties(appConfig);
         loadPropertiesFromClasspath(producerConfig, configurationFileKafka);
+        producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ItemSerializer.class);
 
-        Producer<String, String> producer = new KafkaProducer<>(producerConfig);
+        Producer<String, GenericItem> producer = new KafkaProducer<>(producerConfig);
         OkHttpClient httpClient = new OkHttpClient();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
@@ -48,19 +58,24 @@ public class HackerNewsCrawler {
         producer.flush();
     }
 
-    private static void start(OkHttpClient client, Producer<String, String> producer) {
+    private static void start(OkHttpClient client, Producer<String, GenericItem> producer) {
         final int start = Integer.parseInt(appConfig.getProperty(hackerNewsItemBegin));
         final int offset = Integer.parseInt(appConfig.getProperty(hackerNewsItemOffset));
         final int interval = Integer.parseInt(appConfig.getProperty(hackerNewsCrawInterval));
         final String topic = appConfig.getProperty(kafkaTargetTopic);
         for(int index = start; ; index += offset) {
-            Optional<String> body = retrieveNews(client, index);
+            Optional<byte[]> body = retrieveNews(client, index);
 
-            if(body.isPresent())
-                producer.send(new ProducerRecord<>(topic, Integer.toString(index), body.get()));
-            else
+            if(body.isPresent()) {
+                try {
+                    GenericItem item = objectMapper.readValue(body.get(), GenericItem.class);
+                    producer.send(new ProducerRecord<>(topic, item.getBy(), item));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            } else {
                 logger.warn("Failed to retrieve item " + index);
-
+            }
 
             try {
                 Thread.sleep(interval);
@@ -70,11 +85,11 @@ public class HackerNewsCrawler {
         }
     }
 
-    private static Optional<String> retrieveNews(OkHttpClient httpClient, int i) {
+    private static Optional<byte[]> retrieveNews(OkHttpClient httpClient, int i) {
         return retrieveNews(httpClient, i, 3);
     }
 
-    private static Optional<String> retrieveNews(OkHttpClient httpClient, int i, int retries) {
+    private static Optional<byte[]> retrieveNews(OkHttpClient httpClient, int i, int retries) {
         for (int j = 0; j < retries; j++) {
             try {
                 return Optional.of(retrieveNewsInternal(httpClient, i));
@@ -85,14 +100,14 @@ public class HackerNewsCrawler {
         return Optional.empty();
     }
 
-    private static String retrieveNewsInternal(OkHttpClient httpClient, int i) throws IOException {
+    private static byte[] retrieveNewsInternal(OkHttpClient httpClient, int i) throws IOException {
         logger.debug("Accessing Item " + i);
         Request request = new Request.Builder()
                 .url("https://hacker-news.firebaseio.com/v0/item/"+ i +".json")
                 .build();
 
         Response response = httpClient.newCall(request).execute();
-        return new String(response.body().bytes());
+        return response.body().bytes();
     }
 
     private static void loadPropertiesFromSystemProperties(Properties props) {
