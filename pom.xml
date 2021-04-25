@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>producer-hackernews</module>
-        <module>kafka-stream-wordcount</module>
+        <module>hacker-news-topic-refering-statastic</module>
         <module>hacker-news-domain-objects</module>
     </modules>
 
