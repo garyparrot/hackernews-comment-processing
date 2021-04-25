@@ -10,7 +10,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>hacker-news-producer</module>
-        <module>hacker-news-topic-refering-statastic</module>
+        <module>hacker-news-topic-referring-statistics</module>
         <module>hacker-news-domain-objects</module>
     </modules>
 

@@ -26,11 +26,11 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>hacker-news-topic-refering-statastic</artifactId>
+    <artifactId>hacker-news-topic-refering-statistics</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>hacker-news-topic-refering-statastic</name>
+    <name>hacker-news-topic-referring-statistics</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -137,17 +137,6 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>5.7.1</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
             <version>5.7.1</version>
             <scope>test</scope>
         </dependency>
