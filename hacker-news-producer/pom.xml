@@ -10,10 +10,10 @@
     <version>1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>producer-hackernews</artifactId>
+  <artifactId>hacker-news-producer</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>producer-hackernews</name>
+  <name>hacker-news-producer</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
