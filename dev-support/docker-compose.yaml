@@ -1,0 +1,32 @@
+version: "3.7"
+
+# This docker-compose file is used to quickly bootstrap a local kafka server for development purpose.
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka
+    container_name: kafka
+    network_mode: host
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: localhost:32181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:29092
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.1.1
+    container_name: zookeeper
+    network_mode: host
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+
+  postgres:
+    image: debezium/example-postgres
+    container_name: postgres-server
+    network_mode: host
+    volumes:
+    - ${PWD}/sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    environment:
+      POSTGRES_PASSWORD: example
