@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS keywords (
     keyword TEXT UNIQUE,
     category TEXT[]
 );
-ALTER SEQUENCE keywords_id_seq OWNED BY keywords.keyword_id;
+ALTER SEQUENCE keywords_id_seq OWNED BY keywords.id;
 
 INSERT INTO keywords (keyword, category)
     VALUES ('opensource', '{"opensource", "foss"}'),
