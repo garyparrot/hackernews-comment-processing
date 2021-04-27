@@ -11,6 +11,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.example.hackernews.GenericItem;
 import org.example.hackernews.ItemSerializer;
+import org.example.hackernews.ItemType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,8 @@ public class HackerNewsCrawler {
             if(body.isPresent()) {
                 try {
                     GenericItem item = objectMapper.readValue(body.get(), GenericItem.class);
-                    producer.send(new ProducerRecord<>(topic, item.getBy(), item));
+                    if(item != null && item.getType() == ItemType.comment)
+                        producer.send(new ProducerRecord<>(topic, item.getBy(), item));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
