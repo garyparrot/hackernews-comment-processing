@@ -1,24 +1,18 @@
 package org.example;
 
-import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.example.hackernews.CommentItem;
 import org.example.hackernews.GenericItem;
-import org.example.hackernews.ItemDeserializer;
-import org.example.hackernews.ItemSerializer;
 import org.example.keywords.*;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.Arrays.stream;
-import static org.example.keywords.CdcRecord.Operation.Create;
 
 @Slf4j
 public class TopicReferringStatistics {
@@ -29,7 +23,7 @@ public class TopicReferringStatistics {
         final Serde<String[]> serdeStringArray = createJsonPOJOSerdes(String[].class);
         final Serde<CdcRecord> serdeCdcRecord = createJsonPOJOSerdes(CdcRecord.class);
         final Serde<GenericItem> serdeGenericItem = createJsonPOJOSerdes(GenericItem.class);
-        final Serde<CategoriesAndOccurrence> serdeCAO = createJsonPOJOSerdes(CategoriesAndOccurrence.class);
+        final Serde<CategoriesAndOccurrence> serdeCategoriesAndOccurrence = createJsonPOJOSerdes(CategoriesAndOccurrence.class);
 
         Properties props = new Properties();
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
@@ -37,35 +31,24 @@ public class TopicReferringStatistics {
 
         StreamsBuilder builder = new StreamsBuilder();
 
+        /* Declare keyword table */
         KTable<String, String[]> keywordTable = builder.stream("postgres-server.public.keywords", Consumed.with(serdeString, serdeCdcRecord))
                 .flatMap(TopicReferringStatistics::flatMapPostgresCDCRecord)
                 .toTable(Materialized.with(serdeString, serdeStringArray));
 
+        /* Declare comment source */
         KStream<String, CategoriesAndOccurrence> wordMatches = builder.stream("hacker-news-comment", Consumed.with(serdeString, serdeGenericItem))
-                .flatMap(new KeyValueMapper<String, GenericItem, Iterable<KeyValue<String, Long>>>() {
-                    @Override
-                    public Iterable<KeyValue<String, Long>> apply(String key, GenericItem value) {
-                        if(value == null || value.getText() == null)
-                            return Collections.emptyList();
-                        return stream(value.getText().toLowerCase(Locale.getDefault()).split("\\W+"))
-                                .map((word) -> new KeyValue<String, Long>(word, value.getId()))
-                                .collect(Collectors.toList());
-                    }
-                })
+                .flatMap(TopicReferringStatistics::mapGenericItemTextToWordIdPairs)
                 .repartition(Repartitioned.with(serdeString, serdeLong))
-                .join(keywordTable, new ValueJoiner<Long, String[], CategoriesAndOccurrence>() {
-                    @Override
-                    public CategoriesAndOccurrence apply(Long value1, String[] value2) {
-                        return new CategoriesAndOccurrence(value1, value2);
-                    }
-                });
-        wordMatches.to("result", Produced.with(serdeString, serdeCAO));
+                .join(keywordTable, (commentItemId, relatedTopics) -> new CategoriesAndOccurrence(commentItemId, relatedTopics));
+
+        wordMatches.to("result", Produced.with(serdeString, serdeCategoriesAndOccurrence));
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
         final CountDownLatch latch = new CountDownLatch(1);
 
-        System.out.println(topology.describe());
+        log.info(topology.describe().toString());
 
         Runtime.getRuntime().addShutdownHook(new Thread("streams-shutdown-hook") {
             @Override
@@ -116,6 +99,13 @@ public class TopicReferringStatistics {
         throw new AssertionError();
     }
 
+    public static Iterable<KeyValue<String, Long>> mapGenericItemTextToWordIdPairs(String key, GenericItem value) {
+        if(value == null || value.getText() == null)
+            return Collections.emptyList();
+        return stream(value.getText().toLowerCase(Locale.getDefault()).split("\\W+"))
+                .map((word) -> new KeyValue<String, Long>(word, value.getId()))
+                .collect(Collectors.toList());
+    }
 
     public static <T> Serde<T> createJsonPOJOSerdes(Class<T> targetClass) {
         JsonPOJOSerializer<T> serializer = new JsonPOJOSerializer<>();
