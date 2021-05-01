@@ -30,3 +30,12 @@ services:
     - ${PWD}/sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
     environment:
       POSTGRES_PASSWORD: example
+
+  connect:
+    build:
+      context: ./pg-connector
+    container_name: kakfa-connect
+    depends_on:
+      - kafka
+      - postgres
+    network_mode: host
