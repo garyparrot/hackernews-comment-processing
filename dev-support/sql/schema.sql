@@ -6,6 +6,17 @@ CREATE TABLE IF NOT EXISTS keywords (
 );
 ALTER SEQUENCE keywords_id_seq OWNED BY keywords.id;
 
+/* keyword matches */
+CREATE SEQUENCE keyword_matches_id_seq;
+CREATE TABLE IF NOT EXISTS keyword_matches (
+    id INTEGER NOT NULL PRIMARY KEY DEFAULT nextval('keyword_matches_id_seq'),
+    hacker_news_item_id BIGINT NOT NULL,
+    keyword TEXT NOT NULL,
+    category TEXT NOT NULL,
+    CONSTRAINT keyword_matches_unique_entry UNIQUE (hacker_news_item_id, keyword, category)
+);
+ALTER SEQUENCE keyword_matches_id_seq OWNED BY keyword_matches.id;
+
 INSERT INTO keywords (keyword, category)
     VALUES ('opensource', '{"opensource", "foss"}'),
            ('ubuntu', '{"linux", "opensource"}'),
