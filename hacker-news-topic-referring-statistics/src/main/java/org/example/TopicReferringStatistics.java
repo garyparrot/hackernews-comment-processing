@@ -26,7 +26,7 @@ public class TopicReferringStatistics {
         final Serde<CategoriesAndOccurrence> serdeCategoriesAndOccurrence = createJsonPOJOSerdes(CategoriesAndOccurrence.class);
 
         Properties props = new Properties();
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:29092");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "topic-referring-statistics-2");
 
         StreamsBuilder builder = new StreamsBuilder();
