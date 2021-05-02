@@ -1,0 +1,5 @@
+spring:
+  config.active.on-profile: development
+---
+spring:
+  config.active.on-profile: production
