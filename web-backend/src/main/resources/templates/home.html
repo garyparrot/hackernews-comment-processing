@@ -13,9 +13,12 @@
         <div class="row">
             <div class="col">
                 <span>Available Topics: </span>
-                <a href="#" class="badge badge-primary badge-pill">Java</a>
-                <a href="#" class="badge badge-primary badge-pill">Java</a>
-                <a href="#" class="badge badge-primary badge-pill">Java</a>
+                <!--/*@thymesVar id="topic" type="org.example.webbackend.domain.Topic"*/-->
+                <a th:each="topic: ${topicList}"
+                   th:text="${topic.getTopicName()}"
+                   class="badge badge-primary badge-pill"
+                   style="margin: 2px"
+                   href="#"></a>
             </div>
         </div>
     </div>

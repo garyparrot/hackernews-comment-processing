@@ -43,3 +43,6 @@ INSERT INTO keywords (keyword, category)
            ('maven', '{"java"}'),
            ('gradle', '{"java"}'),
            ('jvm', '{"java"}');
+
+CREATE MATERIALIZED VIEW topic_list AS
+    SELECT DISTINCT unnest(category) AS topic_name FROM keywords;

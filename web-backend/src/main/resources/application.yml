@@ -1,5 +1,11 @@
 spring:
   config.active.on-profile: development
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: example
+logging:
+  level.org.example: DEBUG
 ---
 spring:
   config.active.on-profile: production

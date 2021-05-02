@@ -39,7 +39,7 @@ services:
 
   connect:
     build:
-      context: ./pg-connector
+      context: ./pg-cdc-connector
     container_name: kakfa-connect
     depends_on:
       - kafka
