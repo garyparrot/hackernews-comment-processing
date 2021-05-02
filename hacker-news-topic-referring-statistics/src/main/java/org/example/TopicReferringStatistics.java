@@ -24,6 +24,7 @@ public class TopicReferringStatistics {
         final Serde<CdcRecord> serdeCdcRecord = createJsonPOJOSerdes(CdcRecord.class);
         final Serde<GenericItem> serdeGenericItem = createJsonPOJOSerdes(GenericItem.class);
         final Serde<CategoriesAndOccurrence> serdeCategoriesAndOccurrence = createJsonPOJOSerdes(CategoriesAndOccurrence.class);
+        final Serde<PostgresTableRecord> serdePgRecord = createJsonPOJOSerdes(PostgresTableRecord.class);
 
         Properties props = new Properties();
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -41,6 +42,14 @@ public class TopicReferringStatistics {
                 .flatMap(TopicReferringStatistics::mapGenericItemTextToWordIdPairs)
                 .repartition(Repartitioned.with(serdeString, serdeLong))
                 .join(keywordTable, (commentItemId, relatedTopics) -> new CategoriesAndOccurrence(commentItemId, relatedTopics));
+
+        wordMatches.flatMap((String key, CategoriesAndOccurrence cao) -> {
+            long id = cao.getOccurrenceId();
+            return stream(cao.getCategories())
+                    .map((category) -> KeyValue.pair(category, new PostgresTableRecord(id, category)))
+                    .collect(Collectors.toList());
+        }).repartition(Repartitioned.with(serdeString, serdePgRecord))
+          .to("keyword-matches");
 
         wordMatches.to("result", Produced.with(serdeString, serdeCategoriesAndOccurrence));
 
