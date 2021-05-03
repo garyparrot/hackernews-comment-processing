@@ -8,6 +8,8 @@ services:
     container_name: kafka
     ports:
       - 9092:9092
+    depends_on:
+        - zookeeper
     environment:
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
@@ -56,3 +58,14 @@ services:
       SCHEMA_REGISTRY_KAFKA_BOOTSTRAP_SERVERS: 'PLAINTEXT://kafka:29092'
       SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:32181'
+
+  schema-updater:
+    build:
+      context: ./schema-repository
+    container_name: schema-updater
+    depends_on:
+      - kafka
+      - schema-registry
+    environment:
+      SCHEMA_REGISTRY_IP_PORT: 'schema-registry:8081'
+      WAIT: '25'

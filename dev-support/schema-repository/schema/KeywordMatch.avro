@@ -1,0 +1,10 @@
+{
+    "type": "record",
+    "name": "org.example.domain.KeywordMatch",
+    "doc": "A keyword match from HackerNews item, this record will send to PostgreSQL for storing",
+    "fields": [
+        { "name": "hacker_news_item_id", "type": "long" },
+        { "name": "keyword", "type": "string" },
+        { "name": "category", "type": "string" }
+    ]
+}
