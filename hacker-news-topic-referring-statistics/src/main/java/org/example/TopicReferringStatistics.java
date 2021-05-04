@@ -44,6 +44,7 @@ public class TopicReferringStatistics {
 
         /* Declare comment source */
         KStream<String, CategoriesAndOccurrence> wordMatches = builder.stream("hacker-news-comment", Consumed.with(serdeString, serdeGenericItem))
+                // TODO: Implement some tests to ensure that the <word, hacker news item id> pair won't duplicate
                 .flatMap(TopicReferringStatistics::mapGenericItemTextToWordIdPairs)
                 .repartition(Repartitioned.with(serdeString, serdeLong))
                 .join(keywordTable, (commentItemId, relatedTopics) -> new CategoriesAndOccurrence(commentItemId, relatedTopics));
@@ -122,7 +123,7 @@ public class TopicReferringStatistics {
             return Collections.emptyList();
         return stream(value.getText().toLowerCase(Locale.getDefault()).split("\\W+"))
                 .map((word) -> new KeyValue<String, Long>(word, value.getId()))
-                .collect(Collectors.toList());
+                .collect(Collectors.toSet());
     }
 
     public static <T> Serde<T> createJsonPOJOSerdes(Class<T> targetClass) {
