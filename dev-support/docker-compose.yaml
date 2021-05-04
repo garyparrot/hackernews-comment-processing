@@ -37,18 +37,29 @@ services:
     environment:
       POSTGRES_PASSWORD: example
 
-  connect:
+  pg-cdc-connect:
     build:
       context: ./pg-cdc-connector
-    container_name: kakfa-connect
+    container_name: kakfa-cdc-connect
     depends_on:
       - kafka
       - postgres
+
+  pg-data-connect:
+    build:
+      context: ./pg-data-connector
+    container_name: kakfa-data-connect
+    depends_on:
+      - kafka
+      - postgres
+      - schema-registry
 
   schema-registry:
     image: confluentinc/cp-schema-registry:6.1.1
     hostname: schema-registry
     container_name: schema-registry
+    volumes:
+        - ${PWD}/schema-repository/schema:/schema
     ports:
       - 8081:8081
     depends_on:

@@ -38,6 +38,11 @@
 
     <repositories>
         <repository>
+            <id>confluent repository</id>
+            <name>Confluent Repository</name>
+            <url>https://packages.confluent.io/maven/</url>
+        </repository>
+        <repository>
             <id>apache.snapshots</id>
             <name>Apache Development Snapshot Repository</name>
             <url>https://repository.apache.org/content/repositories/snapshots/</url>
@@ -50,6 +55,13 @@
         </repository>
     </repositories>
 
+    <pluginRepositories>
+        <pluginRepository>
+            <id>Confluent IO</id>
+            <url>https://packages.confluent.io/maven/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
     <!--
 		Execute "mvn clean package -Pbuild-jar"
 		to build a jar file out of this project!
@@ -57,6 +69,42 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>io.confluent</groupId>
+                <artifactId>kafka-schema-registry-maven-plugin</artifactId>
+                <version>6.1.1</version>
+                <executions>
+                    <execution>
+                        <phase>validate</phase>
+                        <goals><goal>download</goal></goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <schemaRegistryUrls>http://localhost:8081</schemaRegistryUrls>
+                    <outputDirectory>src/main/resources/avro</outputDirectory>
+                    <subjects>
+                        <KeywordMatch>src/main/resources/avro</KeywordMatch>
+                    </subjects>
+                    <subjectPatterns>
+                        <pattern>^KeywordMatch$</pattern>
+                    </subjectPatterns>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.avro</groupId>
+                <artifactId>avro-maven-plugin</artifactId>
+                <version>1.10.2</version>
+                <executions>
+                    <execution>
+                        <goals><goal>schema</goal></goals>
+                        <phase>generate-sources</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <sourceDirectory>${project.basedir}/src/main/resources/avro</sourceDirectory>
+                    <outputDirectory>${project.build.directory}/generated-sources/avro</outputDirectory>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -151,6 +199,13 @@
             <version>1.18.18</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>io.confluent</groupId>
+            <artifactId>kafka-streams-avro-serde</artifactId>
+            <version>6.1.1</version>
+        </dependency>
     </dependencies>
+
+
 
 </project>

@@ -1,10 +1,12 @@
 package org.example;
 
+import io.confluent.kafka.streams.serdes.avro.SpecificAvroSerde;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.example.domain.KeywordMatch;
 import org.example.hackernews.GenericItem;
 import org.example.keywords.*;
 
@@ -24,11 +26,14 @@ public class TopicReferringStatistics {
         final Serde<CdcRecord> serdeCdcRecord = createJsonPOJOSerdes(CdcRecord.class);
         final Serde<GenericItem> serdeGenericItem = createJsonPOJOSerdes(GenericItem.class);
         final Serde<CategoriesAndOccurrence> serdeCategoriesAndOccurrence = createJsonPOJOSerdes(CategoriesAndOccurrence.class);
-        final Serde<PostgresTableRecord> serdePgRecord = createJsonPOJOSerdes(PostgresTableRecord.class);
+        final Serde<KeywordMatch> serdeKeywordMatch = new SpecificAvroSerde<>();
+        final Map<String, String> serdeConfig = Collections.singletonMap("schema.registry.url", "http://localhost:8081");
+        serdeKeywordMatch.configure(serdeConfig, true);
 
         Properties props = new Properties();
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "topic-referring-statistics-2");
+        props.put("schema.registry.url", "http://localhost:8081");
 
         StreamsBuilder builder = new StreamsBuilder();
 
@@ -46,10 +51,14 @@ public class TopicReferringStatistics {
         wordMatches.flatMap((String key, CategoriesAndOccurrence cao) -> {
             long id = cao.getOccurrenceId();
             return stream(cao.getCategories())
-                    .map((category) -> KeyValue.pair(category, new PostgresTableRecord(id, category)))
+                    .map((category) -> KeyValue.pair(category, KeywordMatch.newBuilder()
+                            .setKeyword(key)
+                            .setHackerNewsItemId(id)
+                            .setCategory(category)
+                            .build()))
                     .collect(Collectors.toList());
-        }).repartition(Repartitioned.with(serdeString, serdePgRecord))
-          .to("keyword-matches");
+        }).repartition(Repartitioned.with(serdeString, serdeKeywordMatch))
+                .to("keyword-matches");
 
         wordMatches.to("result", Produced.with(serdeString, serdeCategoriesAndOccurrence));
 
