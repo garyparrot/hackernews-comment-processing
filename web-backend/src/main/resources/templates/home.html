@@ -21,6 +21,13 @@
                    href="#"></a>
             </div>
         </div>
+        <div class="row">
+            <h1>Recent activity:</h1>
+        </div>
+        <div class="row"
+             th:each="km: ${recentKeywordMatches}">
+            <a th:text="${km.getCategory()}" th:href="'https://hacker-news.firebaseio.com/v0/item/'+${km.getHackerNewsItemId()}+'.json?print=pretty'"></a>
+        </div>
     </div>
 </body>
 
