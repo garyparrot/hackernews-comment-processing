@@ -90,6 +90,7 @@
                     </subjectPatterns>
                 </configuration>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.avro</groupId>
                 <artifactId>avro-maven-plugin</artifactId>

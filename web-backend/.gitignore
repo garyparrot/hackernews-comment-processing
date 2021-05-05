@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Avro ###
+src/main/resources/avro
