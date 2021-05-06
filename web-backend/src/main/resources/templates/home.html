@@ -6,6 +6,9 @@
     <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
 </head>
 <body>
+    <noscript>
+        Oops, this website require JavaScript to work properly.
+    </noscript>
     <div class="container">
         <div class="row" style="margin-top: 50px">
             <h1>Hacker News Topic Tracking</h1>
@@ -24,9 +27,12 @@
         <div class="row">
             <h1>Recent activity:</h1>
         </div>
-        <div class="row"
-             th:each="km: ${recentKeywordMatches}">
-            <a th:text="${km.getCategory()}" th:href="'https://hacker-news.firebaseio.com/v0/item/'+${km.getHackerNewsItemId()}+'.json?print=pretty'"></a>
+
+        <div id="section">
+            <div class="row"
+                 th:each="km: ${recentKeywordMatches}">
+                <a th:text="${km.getCategory()}" th:href="'https://hacker-news.firebaseio.com/v0/item/'+${km.getHackerNewsItemId()}+'.json?print=pretty'"></a>
+            </div>
         </div>
     </div>
 </body>
@@ -34,5 +40,8 @@
 <script th:src="@{/webjars/jquery/jquery.js}"></script>
 <script th:src="@{/webjars/popper.js/popper.js}"></script>
 <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+<script th:src="@{/webjars/sockjs-client/sockjs.min.js}"></script>
+<script th:src="@{/webjars/stomp-websocket/stomp.min.js}"></script>
+<script th:src="@{/app.js}"></script>
 
 </html>
