@@ -6,6 +6,7 @@
     <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
 </head>
 <body>
+
     <noscript>
         Oops, this website require JavaScript to work properly.
     </noscript>
@@ -29,10 +30,6 @@
         </div>
 
         <div id="section">
-            <div class="row"
-                 th:each="km: ${recentKeywordMatches}">
-                <a th:text="${km.getCategory()}" th:href="'https://hacker-news.firebaseio.com/v0/item/'+${km.getHackerNewsItemId()}+'.json?print=pretty'"></a>
-            </div>
         </div>
     </div>
 </body>
@@ -42,6 +39,24 @@
 <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
 <script th:src="@{/webjars/sockjs-client/sockjs.min.js}"></script>
 <script th:src="@{/webjars/stomp-websocket/stomp.min.js}"></script>
+<script th:src="@{/webjars/axios/dist/axios.js}"></script>
 <script th:src="@{/app.js}"></script>
+
+<template id="KeywordMatchCard">
+    <div class="row card m-2">
+        <div class="card-body">
+            <h5 class="card-title">Category</h5>
+            <div class="card-subtitle mb-2 text-muted">Author</div>
+            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam venenatis congue
+                nisi non dapibus. Nullam eu auctor dolor. Etiam vitae massa accumsan, suscipit erat at, malesuada
+                augue. Quisque hendrerit sodales tortor, vel mattis quam semper eget. Mauris venenatis ultricies
+                massa, id sagittis diam vehicula at. Cras pellentesque est fermentum, convallis justo porttitor,
+                auctor ex. Phasellus ac quam ac quam auctor porttitor. Nam a ullamcorper est. Quisque interdum
+                sagittis ipsum non imperdiet.
+            </p>
+            <a href="#" class="card-link">Browse on HN</a>
+        </div>
+    </div>
+</template>
 
 </html>
