@@ -4,33 +4,32 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+    <link th:rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body>
 
     <noscript>
         Oops, this website require JavaScript to work properly.
     </noscript>
-    <div class="container">
-        <div class="row" style="margin-top: 50px">
-            <h1>Hacker News Topic Tracking</h1>
-        </div>
+    <div class="container-fluid header-area p-5">
+        <h1 class="header-title">Hacker News Comment Tracking</h1>
+
         <div class="row">
-            <div class="col">
-                <span>Available Topics: </span>
+            <div class="col-2"></div>
+            <div class="col-8" style="text-align: center">
                 <!--/*@thymesVar id="topic" type="org.example.webbackend.domain.Topic"*/-->
                 <a th:each="topic: ${topicList}"
                    th:text="${topic.getTopicName()}"
-                   class="badge badge-primary badge-pill"
+                   class="badge badge-secondary badge-pill"
                    style="margin: 2px"
                    href="#"></a>
             </div>
+            <div class="col-2"></div>
         </div>
-        <div class="row">
-            <h1>Recent activity:</h1>
-        </div>
+    </div>
 
-        <div id="section">
-        </div>
+    <div class="container mt-5 mb-5">
+        <div id="section"> </div>
     </div>
 </body>
 
