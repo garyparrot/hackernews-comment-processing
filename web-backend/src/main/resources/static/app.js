@@ -4,14 +4,14 @@ function setConnected(connected) {
     console.log("Current state: ", connected);
 }
 
-function connect() {
+function connect(subscribe_to = "/stream/keyword-matches") {
     let socket = new SockJS('/gs-guide-websocket');
 
     stompClient = Stomp.over(socket);
     stompClient.debug = null;
     stompClient.connect({}, function (frame) {
         setConnected(true);
-        stompClient.subscribe('/stream/keyword-matches', function(content) {
+        stompClient.subscribe(subscribe_to, function(content) {
             onReceiveKeywordMatchUpdate(JSON.parse(content.body));
         });
     });
@@ -51,7 +51,6 @@ function addEntryToList(keywordMatch) {
 
     // TODO: fix the hack
     itemId = keywordMatch.hackerNewsItemId || keywordMatch.hacker_news_item_id;
-
     newItem.getElementsByClassName("card-title")[0]
         .innerHTML = keywordMatch.category;
     newItem.getElementsByClassName("card-subtitle")[0]
@@ -80,8 +79,29 @@ function queryHackerNewsItem(itemId, callback) {
     axios.get(url).then((response) => callback(response.data))
 }
 
+function clearSection() {
+    $("#section").empty();
+}
+
+function queryByCategory(category) {
+    clearSection()
+
+    axios.get("/v0/keyword-matches/category/" + category)
+        .then(function (response) {
+            response.data.forEach((item) => addEntryToList(item));
+        });
+
+    disconnect();
+    connect("/stream/keyword-matches/category/" + category);
+}
+
 $(function () {
-    axios.get("/v0/keyword-matches/recent", { params: { page: 0 } })
+
+    $(".category-button").on("click", (e) => {
+        queryByCategory(e.target.innerText);
+    })
+
+    axios.get("/v0/keyword-matches/recent")
         .then(function (response) {
             response.data.forEach((item) => addEntryToList(item))
         })

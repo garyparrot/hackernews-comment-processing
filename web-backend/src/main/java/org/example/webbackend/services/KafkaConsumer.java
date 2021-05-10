@@ -30,6 +30,7 @@ public class KafkaConsumer {
                 km.getHackerNewsItemId()));
 
         template.convertAndSend("/stream/keyword-matches", km.toString());
+        template.convertAndSend("/stream/keyword-matches/category/" + km.getCategory(), km.toString());
     }
 
 }

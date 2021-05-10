@@ -12,7 +12,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        registry.enableSimpleBroker("/stream/keyword-matches");
+        registry.enableSimpleBroker("/stream/keyword-matches", "/stream/keyword-matches/category");
         registry.setApplicationDestinationPrefixes("/");
     }
 

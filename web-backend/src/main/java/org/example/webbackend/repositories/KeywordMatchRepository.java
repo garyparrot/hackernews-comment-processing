@@ -12,5 +12,6 @@ public interface KeywordMatchRepository extends org.springframework.data.reposit
 
     List<KeywordMatch> findAllByOrderByIdDesc(Pageable pageable);
     List<KeywordMatch> findAllByCategoryOrderByIdDesc(String category, Pageable pageable);
+    List<KeywordMatch> findKeywordMatchByCategoryOrderByIdDesc(String category, Pageable pageable);
     KeywordMatch findById(int id);
 }

@@ -20,7 +20,7 @@
                 <!--/*@thymesVar id="topic" type="org.example.webbackend.domain.Topic"*/-->
                 <a th:each="topic: ${topicList}"
                    th:text="${topic.getTopicName()}"
-                   class="badge badge-secondary badge-pill"
+                   class="badge badge-secondary badge-pill category-button"
                    style="margin: 2px"
                    href="#"></a>
             </div>
