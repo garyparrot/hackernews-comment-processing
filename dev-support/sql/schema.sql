@@ -57,3 +57,22 @@ INSERT INTO keywords (keyword, category)
 
 CREATE MATERIALIZED VIEW topic_list AS
     SELECT DISTINCT unnest(category) AS topic_name FROM keywords;
+/* * Later we will need to refresh the materialized view concurrently.
+   * In order to do so, we need to add a index on the materialized view.
+   * Reference: https://www.postgresql.org/docs/9.4/sql-refreshmaterializedview.html
+   */
+CREATE UNIQUE INDEX ON topic_list (topic_name);
+
+/*
+ * A trigger on "public.keywords" table.
+ * Once the table updated, trigger a refresh on topic_list materialized view.
+ */
+CREATE OR REPLACE FUNCTION refresh_topic_list() RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+        REFRESH MATERIALIZED VIEW CONCURRENTLY topic_list;
+        RETURN NULL;
+    END;
+$$;
+CREATE TRIGGER trigger_refresh_topic_list
+    AFTER INSERT OR UPDATE OR DELETE ON keywords
+    FOR EACH STATEMENT EXECUTE PROCEDURE refresh_topic_list();
