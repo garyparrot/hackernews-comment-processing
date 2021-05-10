@@ -1,0 +1,69 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+
+    <head th:fragment="headerfiles">
+        <meta charset="UTF-8"/>
+
+        <!--/*@thymesVar id="title" type="String"*/-->
+        <title th:text="${title}">Title</title>
+
+        <script th:src="@{/webjars/jquery/jquery.js}"></script>
+        <script th:src="@{/webjars/popper.js/popper.js}"></script>
+        <script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
+        <script th:src="@{/webjars/sockjs-client/sockjs.min.js}"></script>
+        <script th:src="@{/webjars/stomp-websocket/stomp.min.js}"></script>
+        <script th:src="@{/webjars/axios/dist/axios.js}"></script>
+
+        <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
+        <link th:rel="stylesheet" th:href="@{/css/app.css}">
+
+        <noscript> Oops, this website require JavaScript to work properly. </noscript>
+    </head>
+
+    <body>
+
+        <div th:fragment="header" class="container-fluid header-area p-5">
+            <h1 class="header-title">
+                <a href="/" class="text-reset text-decoration-none" th:text="${title}"></a>
+            </h1>
+        </div>
+        <div th:fragment="header-with-topics" class="container-fluid header-area p-5">
+            <h1 class="header-title">
+                <a href="/" class="text-reset text-decoration-none"> Hacker News Comment Tracking </a>
+            </h1>
+
+            <div class="row">
+                <div class="col-2"></div>
+                <div class="col-8" style="text-align: center">
+                    <!--/*@thymesVar id="topic" type="org.example.webbackend.domain.Topic"*/-->
+                    <a th:each="topic: ${topicList}"
+                       th:text="${topic.getTopicName()}"
+                       class="badge badge-secondary badge-pill category-button"
+                       style="margin: 2px"
+                       href="#"></a>
+                    <a class="badge badge-info badge-pill"
+                       style="margin: 2px"
+                       href="/keywords">...</a>
+                </div>
+                <div class="col-2"></div>
+            </div>
+        </div>
+
+        <div th:fragment="keyword-match-card-fragment" class="card mb-2">
+            <div class="card-body">
+                <h5 class="card-title">Category</h5>
+                <div class="card-subtitle mb-2 text-muted">Author</div>
+                <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam venenatis congue
+                    nisi non dapibus. Nullam eu auctor dolor. Etiam vitae massa accumsan, suscipit erat at, malesuada
+                    augue. Quisque hendrerit sodales tortor, vel mattis quam semper eget. Mauris venenatis ultricies
+                    massa, id sagittis diam vehicula at. Cras pellentesque est fermentum, convallis justo porttitor,
+                    auctor ex. Phasellus ac quam ac quam auctor porttitor. Nam a ullamcorper est. Quisque interdum
+                    sagittis ipsum non imperdiet.
+                </p>
+                <a href="#" class="card-link">Browse on HN</a>
+            </div>
+        </div>
+
+    </body>
+
+</html>

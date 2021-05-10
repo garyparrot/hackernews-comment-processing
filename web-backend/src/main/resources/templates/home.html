@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+    <head th:replace="fragments/general.html :: headerfiles(title='Hacker News Comment Tracking')"></head>
+
+    <body>
+        <header th:replace="fragments/general.html :: header-with-topics"></header>
+
+        <div class="container mt-5 mb-5">
+            <div id="section">
+                <!-- Keyword-match cards insert here -->
+            </div>
+        </div>
+    </body>
+
+    <script th:src="@{/app.js}"></script>
+
+    <template id="KeywordMatchCard">
+        <div th:replace="fragments/general.html :: keyword-match-card-fragment"></div>
+    </template>
+
+</html>
