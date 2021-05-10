@@ -1,61 +1,22 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-    <link th:rel="stylesheet" th:href="@{/webjars/bootstrap/css/bootstrap.min.css}">
-    <link th:rel="stylesheet" th:href="@{/css/app.css}">
-</head>
-<body>
 
-    <noscript>
-        Oops, this website require JavaScript to work properly.
-    </noscript>
-    <div class="container-fluid header-area p-5">
-        <h1 class="header-title">Hacker News Comment Tracking</h1>
+    <head th:replace="fragments/general.html :: headerfiles(title='Hacker News Comment Tracking')"></head>
 
-        <div class="row">
-            <div class="col-2"></div>
-            <div class="col-8" style="text-align: center">
-                <!--/*@thymesVar id="topic" type="org.example.webbackend.domain.Topic"*/-->
-                <a th:each="topic: ${topicList}"
-                   th:text="${topic.getTopicName()}"
-                   class="badge badge-secondary badge-pill category-button"
-                   style="margin: 2px"
-                   href="#"></a>
+    <body>
+        <header th:replace="fragments/general.html :: header-with-topics"></header>
+
+        <div class="container mt-5 mb-5">
+            <div id="section">
+                <!-- Keyword-match cards insert here -->
             </div>
-            <div class="col-2"></div>
         </div>
-    </div>
+    </body>
 
-    <div class="container mt-5 mb-5">
-        <div id="section"> </div>
-    </div>
-</body>
+    <script th:src="@{/app.js}"></script>
 
-<script th:src="@{/webjars/jquery/jquery.js}"></script>
-<script th:src="@{/webjars/popper.js/popper.js}"></script>
-<script th:src="@{/webjars/bootstrap/js/bootstrap.min.js}"></script>
-<script th:src="@{/webjars/sockjs-client/sockjs.min.js}"></script>
-<script th:src="@{/webjars/stomp-websocket/stomp.min.js}"></script>
-<script th:src="@{/webjars/axios/dist/axios.js}"></script>
-<script th:src="@{/app.js}"></script>
-
-<template id="KeywordMatchCard">
-    <div class="row card m-2">
-        <div class="card-body">
-            <h5 class="card-title">Category</h5>
-            <div class="card-subtitle mb-2 text-muted">Author</div>
-            <p class="card-text">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam venenatis congue
-                nisi non dapibus. Nullam eu auctor dolor. Etiam vitae massa accumsan, suscipit erat at, malesuada
-                augue. Quisque hendrerit sodales tortor, vel mattis quam semper eget. Mauris venenatis ultricies
-                massa, id sagittis diam vehicula at. Cras pellentesque est fermentum, convallis justo porttitor,
-                auctor ex. Phasellus ac quam ac quam auctor porttitor. Nam a ullamcorper est. Quisque interdum
-                sagittis ipsum non imperdiet.
-            </p>
-            <a href="#" class="card-link">Browse on HN</a>
-        </div>
-    </div>
-</template>
+    <template id="KeywordMatchCard">
+        <div th:replace="fragments/general.html :: keyword-match-card-fragment"></div>
+    </template>
 
 </html>
