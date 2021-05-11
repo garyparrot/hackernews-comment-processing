@@ -16,6 +16,7 @@ register() {
         echo "[Ok] schema $SCHEMA_NAME updated, server response: $RESULT"
     else
         echo "[No] failed to update $SCHEMA_NAME"
+        exit 1
     fi
 }
 

@@ -91,9 +91,10 @@ services:
     depends_on:
       - kafka
       - schema-registry
+    restart: on-failure
     environment:
       SCHEMA_REGISTRY_IP_PORT: 'schema-registry:8081'
-      WAIT: '25'
+      WAIT: '2'
 
 networks:
   kafka-applicaiton:
