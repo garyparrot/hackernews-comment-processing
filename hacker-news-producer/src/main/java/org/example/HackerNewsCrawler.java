@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -30,6 +32,8 @@ public class HackerNewsCrawler {
     private static final String hackerNewsItemOffset = "application.hackernews.item.offset";
     private static final String hackerNewsCrawInterval = "application.hackernews.craw.interval";
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final String CONFIG_PREFIX_APPLICATION = "APP_";
+    private static final String CONFIG_PREFIX_KAFKA_PRODUCER = "PRODUCER_";
     private static Properties appConfig;
     private static Properties producerConfig;
 
@@ -39,11 +43,35 @@ public class HackerNewsCrawler {
         appConfig = new Properties();
         producerConfig = new Properties();
 
-        // TODO: Don't load configuration like this, probably just embedded everything in code.
-        loadPropertiesFromSystemProperties(appConfig);
+        loadPropertiesFromClasspath(appConfig, configurationFileApp);
         loadPropertiesFromClasspath(producerConfig, configurationFileKafka);
+        loadPropertiesFromEnvironment(appConfig, CONFIG_PREFIX_APPLICATION);
+        loadPropertiesFromEnvironment(producerConfig, CONFIG_PREFIX_KAFKA_PRODUCER);
+
         producerConfig.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         producerConfig.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, ItemSerializer.class);
+
+        StringBuilder applicationConfigString = new StringBuilder("Application Configuration");
+        appConfig.entrySet().stream().sequential().forEach((item) -> {
+            applicationConfigString
+                    .append(System.lineSeparator())
+                    .append("    ")
+                    .append(item.getKey())
+                    .append("=")
+                    .append(item.getValue());
+        });
+        logger.info(applicationConfigString.toString());
+
+        StringBuilder producerConfigString = new StringBuilder("Producer Configuration");
+        producerConfig.entrySet().stream().sequential().forEach((item) -> {
+            producerConfigString
+                    .append(System.lineSeparator())
+                    .append("    ")
+                    .append(item.getKey())
+                    .append("=")
+                    .append(item.getValue());
+        });
+        logger.info(producerConfigString.toString());
 
         Producer<String, GenericItem> producer = new KafkaProducer<>(producerConfig);
         OkHttpClient httpClient = new OkHttpClient();
@@ -112,12 +140,12 @@ public class HackerNewsCrawler {
         return response.body().bytes();
     }
 
-    private static void loadPropertiesFromSystemProperties(Properties props) {
-        loadPropertiesFromClasspath(props, configurationFileApp);
-
-        Properties systemProperties = System.getProperties();
-        if(systemProperties.contains(kafkaTargetTopic))
-            props.put(kafkaTargetTopic, systemProperties.getProperty(kafkaTargetTopic));
+    private static void loadPropertiesFromEnvironment(Properties props, String prefix) {
+        Map<String, String> environments = System.getenv();
+        for (String env : environments.keySet()) {
+            if(env.startsWith(prefix))
+                props.put(env.substring(prefix.length()).toLowerCase(Locale.ROOT).replace("_", "."), environments.get(env));
+        }
     }
 
     private static void loadPropertiesFromClasspath(Properties props, String file) {

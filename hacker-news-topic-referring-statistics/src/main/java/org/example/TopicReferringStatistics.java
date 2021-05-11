@@ -10,6 +10,8 @@ import org.example.domain.KeywordMatch;
 import org.example.hackernews.GenericItem;
 import org.example.keywords.*;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -19,7 +21,28 @@ import static java.util.Arrays.stream;
 @Slf4j
 public class TopicReferringStatistics {
 
+    public static final String SCHEMA_REGISTRY_URL = "schema.registry.url";
+    public static final String BOOTSTRAP_SERVERS = "bootstrap.servers";
+    public static final String COMMENT_SOURCE = "comment.source";
+    public static final String KEYWORD_MATCHES_OUTPUT = "keyword.matches.output";
+    public static final String APP_CONFIG_PREFIX = "APP_";
+
     public static void main(String[] args) {
+        Properties properties = new Properties();
+        loadPropertiesFromClasspath(properties, "/application.properties");
+        loadPropertiesFromEnvironment(properties, APP_CONFIG_PREFIX);
+
+        StringBuilder propertyString = new StringBuilder("Application Configuration");
+        properties.entrySet().stream().sequential().forEach((item) -> {
+            propertyString
+                    .append("    ")
+                    .append(System.lineSeparator())
+                    .append(item.getKey())
+                    .append("=")
+                    .append(item.getValue());
+        });
+        log.info(propertyString.toString());
+
         final Serde<String> serdeString = Serdes.String();
         final Serde<Long> serdeLong = Serdes.Long();
         final Serde<Integer> serdeInt = Serdes.Integer();
@@ -29,13 +52,16 @@ public class TopicReferringStatistics {
         final Serde<KeywordAndCategories> serdeKAC = createJsonPOJOSerdes(KeywordAndCategories.class);
         final Serde<CategoriesAndOccurrence> serdeCategoriesAndOccurrence = createJsonPOJOSerdes(CategoriesAndOccurrence.class);
         final Serde<KeywordMatch> serdeKeywordMatch = new SpecificAvroSerde<>();
-        final Map<String, String> serdeConfig = Collections.singletonMap("schema.registry.url", "http://localhost:8081");
+        final Map<String, String> serdeConfig = Collections.singletonMap("schema.registry.url", properties.getProperty(SCHEMA_REGISTRY_URL));
         serdeKeywordMatch.configure(serdeConfig, true);
 
         Properties props = new Properties();
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, properties.getProperty(BOOTSTRAP_SERVERS));
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "topic-referring-statistics-2");
-        props.put("schema.registry.url", "http://localhost:8081");
+        props.put("schema.registry.url", properties.getProperty(SCHEMA_REGISTRY_URL));
+
+        String topicCommentSource = properties.getProperty(COMMENT_SOURCE);
+        String topicKeywordMatchesResult = properties.getProperty(KEYWORD_MATCHES_OUTPUT);
 
         StreamsBuilder builder = new StreamsBuilder();
 
@@ -61,7 +87,7 @@ public class TopicReferringStatistics {
                 );
 
         /* Declare comment source */
-        KStream<String, CategoriesAndOccurrence> wordMatches = builder.stream("hacker-news-comment", Consumed.with(serdeString, serdeGenericItem))
+        KStream<String, CategoriesAndOccurrence> wordMatches = builder.stream(topicCommentSource, Consumed.with(serdeString, serdeGenericItem))
                 // TODO: Implement some tests to ensure that the <word, hacker news item id> pair won't duplicate
                 .flatMap(TopicReferringStatistics::mapGenericItemTextToWordIdPairs)
                 .repartition(Repartitioned.with(serdeString, serdeLong))
@@ -77,9 +103,7 @@ public class TopicReferringStatistics {
                             .build()))
                     .collect(Collectors.toList());
         }).repartition(Repartitioned.with(serdeString, serdeKeywordMatch))
-                .to("keyword-matches");
-
-        wordMatches.to("result", Produced.with(serdeString, serdeCategoriesAndOccurrence));
+                .to(topicKeywordMatchesResult);
 
         final Topology topology = builder.build();
         final KafkaStreams streams = new KafkaStreams(topology, props);
@@ -145,4 +169,19 @@ public class TopicReferringStatistics {
         return Serdes.serdeFrom(serializer, deserializer);
     }
 
+    private static void loadPropertiesFromEnvironment(Properties props, String prefix) {
+        Map<String, String> environments = System.getenv();
+        for (String env : environments.keySet()) {
+            if(env.startsWith(prefix))
+                props.put(env.substring(prefix.length()).toLowerCase(Locale.ROOT).replace("_", "."), environments.get(env));
+        }
+    }
+
+    private static void loadPropertiesFromClasspath(Properties props, String file) {
+        try (InputStream kafkaConfiguration = TopicReferringStatistics.class.getResourceAsStream(file)) {
+            props.load(kafkaConfiguration);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -6,6 +6,8 @@ services:
   kafka:
     image: confluentinc/cp-kafka
     container_name: kafka
+    networks:
+      - kafka-applicaiton
     ports:
       - 9092:9092
     depends_on:
@@ -20,6 +22,8 @@ services:
   zookeeper:
     image: confluentinc/cp-zookeeper:6.1.1
     container_name: zookeeper
+    networks:
+      - kafka-applicaiton
     ports:
       - 32181:32181
     environment:
@@ -30,6 +34,8 @@ services:
   postgres:
     image: debezium/example-postgres
     container_name: postgres-server
+    networks:
+      - kafka-applicaiton
     ports:
       - 5432:5432
     volumes:
@@ -41,6 +47,8 @@ services:
     build:
       context: ./pg-cdc-connector
     container_name: kakfa-cdc-connect
+    networks:
+      - kafka-applicaiton
     depends_on:
       - kafka
       - postgres
@@ -48,6 +56,8 @@ services:
   pg-data-connect:
     build:
       context: ./pg-data-connector
+    networks:
+      - kafka-applicaiton
     container_name: kakfa-data-connect
     depends_on:
       - kafka
@@ -58,6 +68,8 @@ services:
     image: confluentinc/cp-schema-registry:6.1.1
     hostname: schema-registry
     container_name: schema-registry
+    networks:
+      - kafka-applicaiton
     volumes:
         - ${PWD}/schema-repository/schema:/schema
     ports:
@@ -71,6 +83,8 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:32181'
 
   schema-updater:
+    networks:
+      - kafka-applicaiton
     build:
       context: ./schema-repository
     container_name: schema-updater
@@ -80,3 +94,8 @@ services:
     environment:
       SCHEMA_REGISTRY_IP_PORT: 'schema-registry:8081'
       WAIT: '25'
+
+networks:
+  kafka-applicaiton:
+    driver: bridge
+

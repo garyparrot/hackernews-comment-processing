@@ -1,0 +1,59 @@
+version: "3.7"
+
+# This docker-compose file is used to quickly bootstrap a local kafka server for development purpose.
+
+services:
+
+  hacker-news-producer:
+    image: hacker-news-producer
+    container_name: hacker-news-producer
+    networks:
+      - kafka-applicaiton
+    depends_on:
+      - kafka
+    environment:
+      APP_APPLICATION_HACKERNEWS_ITEM_BEGIN: 27119488
+      APP_APPLICATION_HACKERNEWS_ITEM_OFFSET: -1
+      APP_APPLICATION_HACKERNEWS_CRAW_INTERVAL: 100
+      APP_APPLICATION_KAFKA_TARGET_TOPIC: hacker-news-comment
+      PRODUCER_BOOTSTRAP_SERVERS: kafka:29092
+
+  hacker-news-topic-referring-statistics:
+    image: hacker-news-topic-referring-statistics
+    container_name: hacker-news-topic-referring-statistics
+    networks:
+      - kafka-applicaiton
+    environment:
+      APP_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      APP_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - kafka
+      - schema-registry
+      - postgres
+      - pg-cdc-connect
+
+  web-backend:
+    image: web-backend
+    container_name: web-backend
+    networks:
+      - kafka-applicaiton
+    ports:
+      - 8080:8080
+    environment:
+      APP_DATABASE_HOSTNAME: postgres
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_NAME: postgres
+      APP_DATABASE_USERNAME: postgres
+      APP_DATABASE_PASSWORD: example
+      APP_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APP_KAFKA_REGISTRY_SERVER_URL: http://schema-registry:8081
+    depends_on:
+      - kafka
+      - schema-registry
+      - postgres
+      - pg-cdc-connect
+      - pg-data-connect
+
+networks:
+  kafka-applicaiton:
+    driver: bridge
