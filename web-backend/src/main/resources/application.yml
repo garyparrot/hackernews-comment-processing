@@ -18,3 +18,16 @@ logging:
 ---
 spring:
   config.active.on-profile: production
+  datasource:
+    url: jdbc:postgresql://${APP_DATABASE_HOSTNAME}:${APP_DATABASE_PORT}/${APP_DATABASE_NAME}
+    username: ${APP_DATABASE_USERNAME}
+    password: ${APP_DATABASE_PASSWORD}
+  kafka:
+    bootstrap-servers:
+      - ${APP_KAFKA_BOOTSTRAP_SERVERS}
+    properties:
+      schema.registry.url: ${APP_KAFKA_REGISTRY_SERVER_URL}
+      specific.avro.reader: true
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
