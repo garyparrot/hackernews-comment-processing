@@ -1,0 +1,146 @@
+version: "3.7"
+
+# This docker-compose file is used to quickly bootstrap a local kafka server for development purpose.
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka
+    container_name: kafka
+    networks:
+      - kafka-applicaiton
+    ports:
+      - 9092:9092
+    depends_on:
+        - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:32181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:6.1.1
+    container_name: zookeeper
+    networks:
+      - kafka-applicaiton
+    ports:
+      - 32181:32181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 32181
+      ZOOKEEPER_TICK_TIME: 2000
+      ZOOKEEPER_SYNC_LIMIT: 2
+
+  postgres:
+    image: debezium/example-postgres
+    container_name: postgres-server
+    networks:
+      - kafka-applicaiton
+    ports:
+      - 5432:5432
+    volumes:
+    - ${PWD}/../dev-support/sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    environment:
+      POSTGRES_PASSWORD: example
+
+  pg-cdc-connect:
+    image: docker.pkg.github.com/garyparrot/hackernews-comment-processing/kafka-cdc-connect:1.0.0
+    container_name: kakfa-cdc-connect
+    networks:
+      - kafka-applicaiton
+    depends_on:
+      - kafka
+      - postgres
+
+  pg-data-connect:
+    image: docker.pkg.github.com/garyparrot/hackernews-comment-processing/kafka-data-connect:1.0.0
+    networks:
+      - kafka-applicaiton
+    container_name: kakfa-data-connect
+    depends_on:
+      - kafka
+      - postgres
+      - schema-registry
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:6.1.1
+    hostname: schema-registry
+    container_name: schema-registry
+    networks:
+      - kafka-applicaiton
+    ports:
+      - 8081:8081
+    depends_on:
+      - kafka
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKA_BOOTSTRAP_SERVERS: 'PLAINTEXT://kafka:29092'
+      SCHEMA_REGISTRY_LISTENERS: 'http://0.0.0.0:8081'
+      SCHEMA_REGISTRY_KAFKASTORE_CONNECTION_URL: 'zookeeper:32181'
+
+  schema-updater:
+    image: docker.pkg.github.com/garyparrot/hackernews-comment-processing/schema-updater:1.0.0
+    networks:
+      - kafka-applicaiton
+    container_name: schema-updater
+    depends_on:
+      - kafka
+      - schema-registry
+    restart: on-failure
+    environment:
+      SCHEMA_REGISTRY_IP_PORT: 'schema-registry:8081'
+      WAIT: '2'
+
+  hacker-news-producer:
+    image: docker.pkg.github.com/garyparrot/hackernews-comment-processing/hacker-news-producer:1.0.0
+    container_name: hacker-news-producer
+    networks:
+      - kafka-applicaiton
+    depends_on:
+      - kafka
+    environment:
+      APP_APPLICATION_HACKERNEWS_ITEM_BEGIN: 26701501
+      APP_APPLICATION_HACKERNEWS_ITEM_OFFSET: -1
+      APP_APPLICATION_HACKERNEWS_CRAW_INTERVAL: 100
+      APP_APPLICATION_KAFKA_TARGET_TOPIC: hacker-news-comment
+      PRODUCER_BOOTSTRAP_SERVERS: kafka:29092
+
+  hacker-news-topic-referring-statistics:
+    image: docker.pkg.github.com/garyparrot/hackernews-comment-processing/hacker-news-topic-referring-statistics:1.0.0
+    container_name: hacker-news-topic-referring-statistics
+    networks:
+      - kafka-applicaiton
+    environment:
+      APP_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      APP_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      - kafka
+      - schema-registry
+      - postgres
+      - pg-cdc-connect
+
+  web-backend:
+    image:  docker.pkg.github.com/garyparrot/hackernews-comment-processing/web-backend:1.0.0
+    container_name: web-backend
+    networks:
+      - kafka-applicaiton
+    ports:
+      - 8080:8080
+    environment:
+      APP_DATABASE_HOSTNAME: postgres
+      APP_DATABASE_PORT: 5432
+      APP_DATABASE_NAME: postgres
+      APP_DATABASE_USERNAME: postgres
+      APP_DATABASE_PASSWORD: example
+      APP_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      APP_KAFKA_REGISTRY_SERVER_URL: http://schema-registry:8081
+    depends_on:
+      - kafka
+      - schema-registry
+      - postgres
+      - pg-cdc-connect
+      - pg-data-connect
+
+networks:
+  kafka-applicaiton:
+    driver: bridge
