@@ -4,9 +4,9 @@
 
 ### Introduction
 
-* This application collect Hacker News user comment from Internet. All comments will be joining with a Keyword Kafka table(changelog stream) to find the interesting information.
-* For the Keyword changelog part, I use [Debezium Connector for PostgreSQL](https://debezium.io/documentation/reference/connectors/postgresql.html) to streaming the database change data events into the Kafka broker. Every keyword change in PostgreSQL table will reflect to the Kafka broker in real time.
-* Spring Framework for serving the web user interface.
+* 這個應用蒐集 Hacker News 用戶的留言內容，搭配使用者存於資料庫的關鍵字(keyword)，對留言內的關鍵字做標示。
+* 利用 Debezium Connector for Postgres 對 Postgres 內的 Keyword Table 做動態資料捕捉(Change Data Capture, CDC)，Keyword 資料變動能無縫套用到 Kafka Stream KTable 內。
+* Spring 網頁後端顯示資料
 
 ### Screenshots  
 
@@ -14,7 +14,7 @@
 
 ![Keywords](./resources/screenshot_2.png)
 
-### Run Demo (From existing Docker Image on GitHub)
+### Run Demo (From existing Docker Image on Github)
 
 ```shell
 # Clone the project
@@ -29,7 +29,7 @@ docker-compose up
 open http://localhost:8080
 ```
 
-### Run Demo (Build everything manually)
+### Run Demo (Build everthing manually)
 
 ```shell
 # Clone the project
